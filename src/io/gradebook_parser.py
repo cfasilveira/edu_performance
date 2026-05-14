@@ -54,11 +54,10 @@ _COLUMN_ALIASES: Final[dict[str, str]] = {
     "disciplina": "subject",
     "materia": "subject",
     "subject": "subject",
-    # grade
-    "nota1": "nota1",
-    "nota2": "nota2",
-    "nota3": "nota3",
-    "nota4": "nota4",
+    # teacher
+    "professor": "teacher_name",
+    "prof": "teacher_name",
+    "teacher": "teacher_name",
     # period (mantido por retrocompatibilidade se vier no arquivo, mas ignorado no df final)
     "periodo": "period",
     "bimestre": "period",
@@ -153,13 +152,12 @@ def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     if "nome" in df.columns:
         df = df.drop(columns=["nome"])  # LGPD - descartar PII explícito
 
-    required = {"student_id", "class_id", "subject", "nota1", "nota2", "nota3", "nota4"}
+    required = {"student_id", "class_id", "subject"}
     missing = required - set(df.columns)
     if missing:
         raise GradebookParseError(
             f"Colunas obrigatórias ausentes: {', '.join(sorted(missing))}. "
-            f"Colunas esperadas: {', '.join(sorted(required))}. "
-            f"Colunas encontradas: {', '.join(df.columns.tolist())}"
+            f"Colunas esperadas: {', '.join(sorted(required))} e ao menos uma coluna de avaliação."
         )
     return df
 
@@ -269,7 +267,14 @@ def parse_gradebook(
 
     # ── 5. Normalizar colunas ─────────────────────────────────────────────
     df = _normalize_columns(df)
-    df = df.dropna(subset=["student_id", "class_id", "subject", "nota1", "nota2", "nota3", "nota4"])
+    
+    base_cols = {"student_id", "class_id", "subject", "teacher_name", "period"}
+    assessment_cols = [c for c in df.columns if c not in base_cols]
+    
+    if not assessment_cols:
+         raise GradebookParseError("O arquivo deve conter pelo menos uma coluna com notas/avaliações.")
+
+    df = df.dropna(subset=["student_id", "class_id", "subject"])
 
     # ── 6. Converter e validar cada linha ────────────────────────────────
     records: list[GradeRecord] = []
@@ -280,22 +285,30 @@ def parse_gradebook(
             student_hash = hash_student_id(str(row["student_id"]))
             subject = _map_subject(str(row["subject"]))
             class_id = sanitize_text_input(str(row["class_id"]))
+            
+            teacher_raw = row.get("teacher_name")
+            teacher_name = sanitize_text_input(str(teacher_raw)) if pd.notna(teacher_raw) else "Não Informado"
 
-            # MVP: média das 4 notas para a disciplina no período informado
-            n1 = float(str(row["nota1"]).replace(",", "."))
-            n2 = float(str(row["nota2"]).replace(",", "."))
-            n3 = float(str(row["nota3"]).replace(",", "."))
-            n4 = float(str(row["nota4"]).replace(",", "."))
-            media = (n1 + n2 + n3 + n4) / 4.0
-
-            record = GradeRecord(
-                student_hash=student_hash,
-                class_id=class_id,
-                subject=subject,
-                grade=media,
-                period=period,
-            )
-            records.append(record)
+            for asm_col in assessment_cols:
+                raw_val = row[asm_col]
+                if pd.isna(raw_val) or str(raw_val).strip() == "":
+                    continue
+                
+                try:
+                    grade_val = float(str(raw_val).replace(",", "."))
+                except ValueError:
+                    continue # Ignora valores não numéricos
+                
+                record = GradeRecord(
+                    student_hash=student_hash,
+                    class_id=class_id,
+                    subject=subject,
+                    teacher_name=teacher_name,
+                    assessment_name=asm_col.replace("_", " ").title(),
+                    grade=grade_val,
+                    period=period,
+                )
+                records.append(record)
 
         except (GradebookParseError, ValidationError, ValueError) as exc:
             errors.append(f"Linha {idx + 2}: {exc}")

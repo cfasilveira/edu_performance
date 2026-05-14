@@ -30,6 +30,8 @@ __all__ = [
     "SupportedModel",
     "GradeRecord",
     "StudentProfile",
+    "TeacherProfile",
+    "ClassProfile",
     "GroupingResult",
     "AIRecommendation",
     "HandoffStatus",
@@ -92,6 +94,8 @@ class GradeRecord(BaseModel):
     student_hash: Annotated[str, Field(min_length=12, max_length=12, description="SHA-256[:12] do student_id original")]
     class_id: Annotated[str, Field(min_length=1, max_length=50)]
     subject: SubjectEnum
+    teacher_name: Annotated[str, Field(default="Não Informado", max_length=100)]
+    assessment_name: Annotated[str, Field(default="Nota Geral", max_length=100)]
     grade: Annotated[float, Field(ge=0.0, le=100.0)]
     period: Annotated[str, Field(pattern=r"^\d{4}-(T[1-4]|S[12])$", description="Ex: 2024-T1, 2024-S2")]
     recorded_at: datetime = Field(default_factory=datetime.utcnow)
@@ -138,7 +142,54 @@ class StudentProfile(BaseModel):
 
     @property
     def weak_subjects(self) -> list[SubjectEnum]:
-        return [g.subject for g in self.grades if g.grade < 60.0]
+        return [g.subject for g in self.grades if g.grade < 6.0]
+
+class TeacherProfile(BaseModel):
+    """Perfil agregado de desempenho das turmas de um professor."""
+    model_config = ConfigDict(strict=True, frozen=False)
+    
+    teacher_name: str
+    subjects: set[SubjectEnum] = Field(default_factory=set)
+    classes_taught: set[str] = Field(default_factory=set)
+    records: list[GradeRecord] = Field(default_factory=list)
+
+    @property
+    def average_grade(self) -> float:
+        if not self.records:
+            return 0.0
+        return round(sum(g.grade for g in self.records) / len(self.records), 1)
+        
+    @property
+    def at_risk_percent(self) -> float:
+        if not self.records:
+            return 0.0
+        at_risk = sum(1 for g in self.records if g.grade < 6.0)
+        return round((at_risk / len(self.records)) * 100, 1)
+
+class ClassProfile(BaseModel):
+    """Perfil agregado de desempenho de uma turma."""
+    model_config = ConfigDict(strict=True, frozen=False)
+    
+    class_id: str
+    records: list[GradeRecord] = Field(default_factory=list)
+
+    @property
+    def average_grade(self) -> float:
+        if not self.records:
+            return 0.0
+        return round(sum(g.grade for g in self.records) / len(self.records), 1)
+
+    @property
+    def weak_subjects(self) -> list[str]:
+        subject_averages = {}
+        for r in self.records:
+            subject_averages.setdefault(r.subject.value, []).append(r.grade)
+        
+        weak = []
+        for subj, grades in subject_averages.items():
+            if sum(grades) / len(grades) < 6.0:
+                weak.append(subj)
+        return weak
 
 
 class GroupingResult(BaseModel):

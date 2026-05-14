@@ -40,6 +40,8 @@ __all__ = [
     "hash_student_id",
     "sanitize_text_input",
     "compute_class_statistics",
+    "compute_teacher_statistics",
+    "compute_curriculum_statistics",
     "PASSING_THRESHOLD",
     "AT_RISK_THRESHOLD",
     "EXCELLENCE_THRESHOLD",
@@ -159,4 +161,50 @@ def compute_class_statistics(
         subjects=list(result.keys()),
         total_records=len(records),
     )
+    return result
+
+def compute_teacher_statistics(
+    records: list[GradeRecord],
+) -> dict[str, dict[str, float]]:
+    """Calcula estatísticas de desempenho por professor.
+    Agrupa pelo campo teacher_name.
+    """
+    if not records:
+        return {}
+
+    by_teacher: dict[str, list[float]] = {}
+    for r in records:
+        by_teacher.setdefault(r.teacher_name, []).append(r.grade)
+
+    result: dict[str, dict[str, float]] = {}
+    for teacher, grades in by_teacher.items():
+        at_risk = sum(1 for g in grades if g < PASSING_THRESHOLD)
+        result[teacher] = {
+            "mean": round(mean(grades), 2),
+            "at_risk_pct": round(at_risk / len(grades) * 100, 1),
+            "count": float(len(grades)),
+        }
+    return result
+
+def compute_curriculum_statistics(
+    records: list[GradeRecord],
+) -> dict[str, dict[str, float]]:
+    """Calcula estatísticas de desempenho por Tópico (assessment_name).
+    Agrupa pelo campo assessment_name.
+    """
+    if not records:
+        return {}
+
+    by_topic: dict[str, list[float]] = {}
+    for r in records:
+        by_topic.setdefault(r.assessment_name, []).append(r.grade)
+
+    result: dict[str, dict[str, float]] = {}
+    for topic, grades in by_topic.items():
+        at_risk = sum(1 for g in grades if g < PASSING_THRESHOLD)
+        result[topic] = {
+            "mean": round(mean(grades), 2),
+            "at_risk_pct": round(at_risk / len(grades) * 100, 1),
+            "count": float(len(grades)),
+        }
     return result

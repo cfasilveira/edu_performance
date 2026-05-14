@@ -26,6 +26,17 @@
     "similarity_threshold": 0.75
   },
 
+  "teacher_evaluation": {
+    "expected_passing_rate": 70.0,
+    "attention_required_rate": 50.0,
+    "metrics": ["average_grade", "at_risk_percent"]
+  },
+
+  "syllabus_adjustment": {
+    "extra_hours_threshold_percent": 40.0,
+    "task_reinforcement_threshold_percent": 30.0
+  },
+
   "ai_recommendations": {
     "max_recommendations_per_student": 5,
     "disclaimer_required": true,

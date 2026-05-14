@@ -31,6 +31,8 @@ from src.ui.components.grade_table import render_grade_table
 from src.ui.components.group_view import render_group_view
 from src.ui.components.ai_panel import render_ai_panel
 from src.ui.components.audit_view import render_audit_view
+from src.ui.components.teacher_view import render_teacher_view
+from src.ui.components.curriculum_view import render_curriculum_view
 
 
 # ---------------------------------------------------------------------------
@@ -115,9 +117,11 @@ def render_main() -> None:
     st.title("🎯 EduAnalytics MVP")
     st.caption("Análise de desempenho escolar com IA local · Dados pseudonimizados")
 
-    tab_upload, tab_groups, tab_ai, tab_audit = st.tabs([
+    tab_upload, tab_groups, tab_curriculum, tab_teachers, tab_ai, tab_audit = st.tabs([
         "📤 Upload & Preview",
         "👥 Agrupamentos",
+        "📚 Currículo",
+        "👨‍🏫 Professores",
         "🤖 Recomendações IA",
         "📋 Auditoria",
     ])
@@ -127,6 +131,18 @@ def render_main() -> None:
 
     with tab_groups:
         _tab_groups()
+
+    with tab_curriculum:
+        if st.session_state.records:
+            render_curriculum_view(st.session_state.records)
+        else:
+            st.info("💡 Faça o upload de um boletim na aba Upload.")
+
+    with tab_teachers:
+        if st.session_state.records:
+            render_teacher_view(st.session_state.records)
+        else:
+            st.info("💡 Faça o upload de um boletim na aba Upload.")
 
     with tab_ai:
         _tab_ai()

@@ -46,7 +46,7 @@ class TestParseValid:
     def test_returns_grade_records(self):
         data = _make_csv(VALID_ROWS)
         records = parse_gradebook(data, period="2024-T1", file_extension="csv")
-        assert len(records) == 3
+        assert len(records) == 12
 
     def test_student_id_is_hashed(self):
         data = _make_csv(VALID_ROWS)
@@ -60,7 +60,7 @@ class TestParseValid:
         data = _make_csv(VALID_ROWS)
         records = parse_gradebook(data, period="2024-T1", file_extension="csv")
         notas = [r.grade for r in records]
-        assert 5.95 in notas
+        assert 5.8 in notas
 
     def test_period_propagated(self):
         data = _make_csv(VALID_ROWS)
@@ -79,7 +79,7 @@ class TestParseValid:
         start = time.monotonic()
         records = parse_gradebook(data, period="2024-T1", file_extension="csv")
         elapsed = time.monotonic() - start
-        assert len(records) == 1000
+        assert len(records) == 4000
         assert elapsed < 2.0, f"Parsing de 1000 registros levou {elapsed:.2f}s (limite: 2s)"
 
 
@@ -113,7 +113,7 @@ class TestParseEdgeCases:
         ]
         data = _make_csv(rows)
         records = parse_gradebook(data, period="2024-T1", file_extension="csv")
-        assert len(records) == 3  # linha inválida pulada
+        assert len(records) == 12  # linha inválida pulada
 
     def test_file_too_large_raises(self):
         large = b"a" * (101 * 1024 * 1024)  # 101 MB

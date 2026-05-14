@@ -167,22 +167,28 @@ def _tab_upload() -> None:
         )
         st.success(f"✅ {len(records)} notas carregadas com sucesso!")
 
-    if st.session_state.records:
         st.divider()
         render_grade_table(st.session_state.records)
 
-        st.divider()
-        if st.button("▶️ Agrupar alunos por dificuldade", type="primary", use_container_width=True):
-            with st.spinner("Calculando grupos cross-turma..."):
+        # Gera os agrupamentos automaticamente caso ainda não existam
+        if not st.session_state.groups:
+            with st.spinner("Analisando dados e agrupando alunos..."):
                 from src.analytics.grouping import group_students_by_weakness
-                groups = group_students_by_weakness(st.session_state.records)
-                st.session_state.groups = groups
-                _log_audit(
-                    "grouping_created",
-                    actor="sistema",
-                    details={"groups_formed": len(groups)},
-                )
-            st.success(f"✅ {len(groups)} grupos identificados! Vá para a aba **Agrupamentos**.")
+                try:
+                    groups = group_students_by_weakness(st.session_state.records)
+                    st.session_state.groups = groups
+                    _log_audit(
+                        "grouping_created",
+                        actor="sistema",
+                        details={"groups_formed": len(groups)},
+                    )
+                except Exception as e:
+                    st.error(f"Erro ao agrupar: {e}")
+                    
+        if st.session_state.groups:
+            st.success(f"✅ {len(st.session_state.groups)} grupos identificados automaticamente! Explore as outras abas para ver os resultados.")
+        else:
+            st.info("Todos os alunos parecem estar com notas acima da média. Nenhum grupo de risco formado!")
 
 
 # ── Tab: Grupos ──────────────────────────────────────────────────────────

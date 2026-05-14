@@ -50,9 +50,9 @@ log = structlog.get_logger(__name__)
 # ---------------------------------------------------------------------------
 # Constantes — sempre sincronizadas com pedagogical_rules.json
 # ---------------------------------------------------------------------------
-PASSING_THRESHOLD: Final[float] = 60.0
-AT_RISK_THRESHOLD: Final[float] = 50.0
-EXCELLENCE_THRESHOLD: Final[float] = 85.0
+PASSING_THRESHOLD: Final[float] = 6.0
+AT_RISK_THRESHOLD: Final[float] = 5.0
+EXCELLENCE_THRESHOLD: Final[float] = 8.5
 
 
 # ---------------------------------------------------------------------------

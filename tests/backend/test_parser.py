@@ -32,9 +32,9 @@ def _make_csv(rows: list[dict]) -> bytes:
 
 
 VALID_ROWS = [
-    {"aluno": "aluno_001", "nome": "Joao", "turma": "9A", "disciplina": "Matemática", "nota1": "72.5", "nota2": "70", "nota3": "80", "nota4": "60"},
-    {"aluno": "aluno_002", "nome": "Maria", "turma": "9B", "disciplina": "Português", "nota1": "58,0", "nota2": "60", "nota3": "65", "nota4": "55"},
-    {"aluno": "aluno_003", "nome": "Pedro", "turma": "8A", "disciplina": "Ciências", "nota1": "91.0", "nota2": "90", "nota3": "85", "nota4": "95"},
+    {"aluno": "aluno_001", "nome": "Joao", "turma": "9A", "disciplina": "Matemática", "nota1": "7.25", "nota2": "7.0", "nota3": "8.0", "nota4": "6.0"},
+    {"aluno": "aluno_002", "nome": "Maria", "turma": "9B", "disciplina": "Português", "nota1": "5,80", "nota2": "6.0", "nota3": "6.5", "nota4": "5.5"},
+    {"aluno": "aluno_003", "nome": "Pedro", "turma": "8A", "disciplina": "Ciências", "nota1": "9.10", "nota2": "9.0", "nota3": "8.5", "nota4": "9.5"},
 ]
 
 
@@ -60,7 +60,7 @@ class TestParseValid:
         data = _make_csv(VALID_ROWS)
         records = parse_gradebook(data, period="2024-T1", file_extension="csv")
         notas = [r.grade for r in records]
-        assert 58.0 in notas
+        assert 5.95 in notas
 
     def test_period_propagated(self):
         data = _make_csv(VALID_ROWS)
@@ -72,7 +72,7 @@ class TestParseValid:
         import time
         rows = [
             {"aluno": f"aluno_{i:04d}", "turma": "9A", "disciplina": "Matemática",
-             "nota1": str(50 + (i % 50)), "nota2": "60", "nota3": "70", "nota4": "80"}
+             "nota1": str((50 + (i % 50)) / 10), "nota2": "6.0", "nota3": "7.0", "nota4": "8.0"}
             for i in range(1000)
         ]
         data = _make_csv(rows)
@@ -93,7 +93,7 @@ class TestParseEdgeCases:
             parse_gradebook(b"aluno,nome,turma,disciplina,nota1,nota2,nota3,nota4\n", period="2024-T1", file_extension="csv")
 
     def test_missing_required_column_raises(self):
-        data = b"aluno,turma,nota1,nota2,nota3,nota4\n001,9A,72,70,80,60\n"
+        data = b"aluno,turma,nota1,nota2,nota3,nota4\n001,9A,7.2,7.0,8.0,6.0\n"
         with pytest.raises(GradebookParseError, match="disciplina"):
             parse_gradebook(data, period="2024-T1", file_extension="csv")
 
@@ -109,7 +109,7 @@ class TestParseEdgeCases:
     def test_invalid_subject_skipped_with_log(self):
         """Linha com disciplina inválida é pulada, não quebra o parse."""
         rows = VALID_ROWS + [
-            {"aluno": "aluno_099", "turma": "9A", "disciplina": "XyzInvalido", "nota1": "70", "nota2": "70", "nota3": "70", "nota4": "70"}
+            {"aluno": "aluno_099", "turma": "9A", "disciplina": "XyzInvalido", "nota1": "7.0", "nota2": "7.0", "nota3": "7.0", "nota4": "7.0"}
         ]
         data = _make_csv(rows)
         records = parse_gradebook(data, period="2024-T1", file_extension="csv")
@@ -127,12 +127,12 @@ class TestParseEdgeCases:
 
 class TestParseSecurity:
     def test_csv_injection_equals_raises(self):
-        data = b"aluno,turma,disciplina,nota1,nota2,nota3,nota4\n=cmd|' /C calc',9A,Matematica,72,70,80,60\n"
+        data = b"aluno,turma,disciplina,nota1,nota2,nota3,nota4\n=cmd|' /C calc',9A,Matematica,7.2,7.0,8.0,6.0\n"
         with pytest.raises(GradebookParseError, match="injection"):
             parse_gradebook(data, period="2024-T1", file_extension="csv")
 
     def test_csv_injection_plus_raises(self):
-        data = b"aluno,turma,disciplina,nota1,nota2,nota3,nota4\n+malicious,9A,Matematica,72,70,80,60\n"
+        data = b"aluno,turma,disciplina,nota1,nota2,nota3,nota4\n+malicious,9A,Matematica,7.2,7.0,8.0,6.0\n"
         with pytest.raises(GradebookParseError, match="injection"):
             parse_gradebook(data, period="2024-T1", file_extension="csv")
 

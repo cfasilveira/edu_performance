@@ -50,8 +50,8 @@ def _make_csv_bytes(n_students: int = 30) -> bytes:
         turma = "9A" if i < 15 else "9B"
         for j, subj in enumerate(subjects):
             # Primeiros 10 alunos têm dificuldade em Matemática
-            nota = 40.0 + (i * 2 % 30) if (i < 10 and subj == "Matemática") else 70.0 + (i % 20)
-            nota = min(nota, 100.0)
+            nota = 4.0 + (i * 2 % 3) if (i < 10 and subj == "Matemática") else 7.0 + (i % 2)
+            nota = min(nota, 10.0)
             writer.writerow({
                 "aluno": f"aluno_pipe_{i:03d}",
                 "nome": "Mock",

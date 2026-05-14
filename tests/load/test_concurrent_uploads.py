@@ -25,8 +25,8 @@ def _make_csv(n: int = 100) -> bytes:
         w.writerow({
             "aluno": f"aluno_{i:04d}", "nome": "Mock", "turma": "9A",
             "disciplina": "Matemática", 
-            "nota1": str(60 + i % 40),
-            "nota2": "70", "nota3": "80", "nota4": "90"
+            "nota1": str((60 + i % 40) / 10.0),
+            "nota2": "7.0", "nota3": "8.0", "nota4": "9.0"
         })
     return buf.getvalue().encode("utf-8")
 

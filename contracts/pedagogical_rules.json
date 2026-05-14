@@ -7,12 +7,12 @@
   },
 
   "grading": {
-    "passing_threshold": 60.0,
-    "max_grade": 100.0,
+    "passing_threshold": 6.0,
+    "max_grade": 10.0,
     "min_grade": 0.0,
-    "at_risk_threshold": 50.0,
-    "excellence_threshold": 85.0,
-    "grade_scale": "0-100",
+    "at_risk_threshold": 5.0,
+    "excellence_threshold": 8.5,
+    "grade_scale": "0-10",
     "rounding_rule": "half_up",
     "decimal_places": 1
   },

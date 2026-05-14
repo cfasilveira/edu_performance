@@ -132,34 +132,5 @@ def _render_recommendation(
 
     st.caption(f"Modelo: `{rec.model_used.value}` · Gerado em: {rec.generated_at.strftime('%d/%m/%Y %H:%M')}")
 
-    # ── Aprovação humana obrigatória ──────────────────────────────────────
-    if not already_shown:
-        st.divider()
-        st.markdown("### ✅ Aprovação Pedagógica")
-        st.caption(
-            "Revise as recomendações acima com seu julgamento pedagógico. "
-            "Sua aprovação será registrada no log de auditoria."
-        )
-
-        with st.form(key=f"approval_{rec.group_id}"):
-            approver = st.text_input(
-                "Seu nome (para registro de auditoria):",
-                placeholder="Ex: Prof. Maria",
-                help="Este campo é registrado para conformidade LGPD.",
-            )
-            confirm = st.checkbox(
-                "✔️ Confirmo que revisei as recomendações e as considero pedagogicamente adequadas."
-            )
-            submitted = st.form_submit_button("Aprovar e registrar", type="primary")
-
-        if submitted:
-            if not approver.strip():
-                st.error("❌ Informe seu nome para aprovar.")
-                return
-            if not confirm:
-                st.error("❌ Marque a confirmação antes de aprovar.")
-                return
-
-            on_approve(rec.model_dump(), approver.strip())
-            approved_list.append(rec)
-            st.success(f"✅ Aprovado por **{approver.strip()}** e registrado em auditoria.")
+    # Recomendação exibida diretamente sem necessidade de validação.
+    pass

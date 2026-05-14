@@ -103,14 +103,15 @@ def _shared_weaknesses(
     Returns:
         Lista de SubjectEnum em que o grupo tem dificuldade compartilhada.
     """
-    weakness_sets: list[set[SubjectEnum]] = []
+    weakness_counts: dict[SubjectEnum, int] = defaultdict(int)
     for h in student_hashes:
         weak = {g.subject for g in profiles.get(h, []) if g.grade < PASSING_THRESHOLD}
-        weakness_sets.append(weak)
-
-    if not weakness_sets:
-        return []
-    shared = weakness_sets[0].intersection(*weakness_sets[1:])
+        for w in weak:
+            weakness_counts[w] += 1
+            
+    # Include subjects where at least 50% of the group is weak
+    threshold = len(student_hashes) / 2.0
+    shared = [subj for subj, count in weakness_counts.items() if count >= threshold]
     return sorted(shared, key=lambda s: s.value)
 
 

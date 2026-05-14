@@ -154,12 +154,13 @@ def render_main() -> None:
 # ── Tab: Upload ──────────────────────────────────────────────────────────
 
 def _tab_upload() -> None:
-    records = render_uploader(period=st.session_state.period)
+    records, filename = render_uploader(period=st.session_state.period)
 
-    if records:
+    if records and filename != st.session_state.get("upload_filename"):
         st.session_state.records = records
         st.session_state.groups = []
         st.session_state.ai_recommendations = []
+        st.session_state.upload_filename = filename
         _log_audit(
             "upload",
             actor="professor",
@@ -206,13 +207,6 @@ def _tab_ai() -> None:
     if not st.session_state.groups:
         st.info("💡 Crie agrupamentos primeiro (aba Upload).")
         return
-
-    st.info(
-        "🤖 **IA auxilia, humano decide.**  \n"
-        "As recomendações abaixo são geradas pela IA local (Ollama) e requerem sua aprovação "
-        "antes de qualquer ação. Valide com seu julgamento pedagógico.",
-        icon="⚠️",
-    )
 
     approved = render_ai_panel(
         groups=st.session_state.groups,

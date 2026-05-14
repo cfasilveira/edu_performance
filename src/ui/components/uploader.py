@@ -20,14 +20,14 @@ ALLOWED_TYPES = ["csv", "xlsx", "xls"]
 MAX_SIZE_MB = 10
 
 
-def render_uploader(period: str) -> list[GradeRecord]:
+def render_uploader(period: str) -> tuple[list[GradeRecord], str | None]:
     """Renderiza o componente de upload e retorna records parseados.
 
     Args:
         period: Período letivo selecionado na sidebar.
 
     Returns:
-        Lista de GradeRecord se upload bem-sucedido, lista vazia caso contrário.
+        Tupla com Lista de GradeRecord e o nome do arquivo, se upload bem-sucedido.
     """
     st.subheader("📤 Upload de Boletim")
     st.caption(
@@ -44,13 +44,13 @@ def render_uploader(period: str) -> list[GradeRecord]:
 
     if uploaded is None:
         st.info("👆 Faça o upload de um boletim para começar a análise.")
-        return []
+        return [], None
 
     # ── Validação de tamanho no cliente ──────────────────────────────────
     size_mb = uploaded.size / (1024 * 1024)
     if size_mb > MAX_SIZE_MB:
         st.error(f"❌ Arquivo muito grande: {size_mb:.1f} MB (limite: {MAX_SIZE_MB} MB)")
-        return []
+        return [], None
 
     # ── Preview do nome (sanitizado) ──────────────────────────────────────
     safe_name = html.escape(uploaded.name)
@@ -58,7 +58,7 @@ def render_uploader(period: str) -> list[GradeRecord]:
 
     if not period or not period.strip():
         st.warning("⚠️ Defina o período letivo na barra lateral antes de continuar.")
-        return []
+        return [], None
 
     # ── Parse seguro ──────────────────────────────────────────────────────
     with st.spinner(f"Processando `{safe_name}`..."):
@@ -69,14 +69,13 @@ def render_uploader(period: str) -> list[GradeRecord]:
                 period=period,
                 file_extension=ext,
             )
-            return records
+            return records, uploaded.name
 
         except GradebookParseError as exc:
             st.error(f"❌ Erro no arquivo: {exc}")
-            return []
+            return [], None
         except Exception as exc:
             st.error(f"❌ Erro inesperado ao processar o arquivo. Tente novamente.")
-            # Log do erro real (sem expor stack trace ao usuário)
             import structlog
             structlog.get_logger(__name__).error("upload_unexpected_error", error=str(exc))
-            return []
+            return [], None

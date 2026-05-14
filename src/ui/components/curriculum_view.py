@@ -1,3 +1,4 @@
+import altair as alt
 import pandas as pd
 import streamlit as st
 from contracts.data_models import GradeRecord
@@ -17,16 +18,42 @@ def render_curriculum_view(records: list[GradeRecord]) -> None:
             "Média Geral": s["mean"],
             "Alunos em Risco (%)": s["at_risk_pct"],
             "Total de Notas": int(s["count"]),
+            "Cor": "#ff4b4b" if s["at_risk_pct"] > 40 else "#3366cc"
         }
         for topic, s in stats.items()
     ])
     
+    # Cria o gráfico de barras focando no Risco
+    base = alt.Chart(df).encode(
+        x=alt.X('Alunos em Risco (%):Q', scale=alt.Scale(domain=[0, 100]), title="Alunos em Risco (%)"),
+        y=alt.Y('Tópico/Avaliação:N', sort='-x', title="Tópico / Avaliação")
+    )
+    
+    bars = base.mark_bar().encode(
+        color=alt.Color('Cor:N', scale=None)
+    )
+    
+    text = base.mark_text(
+        align='left',
+        baseline='middle',
+        dx=3
+    ).encode(
+        text=alt.Text('Alunos em Risco (%):Q', format='.1f')
+    )
+    
+    chart = (bars + text).properties(height=max(300, len(df) * 40))
+    st.altair_chart(chart, use_container_width=True)
+    
+    st.caption("🚨 Barras em vermelho (Risco > 40%) indicam a necessidade de **reforço de carga horária** ou **mais tarefas** para fixação do tópico.")
+    
+    st.markdown("### Detalhamento")
     def _color_curriculum(row):
         if row["Alunos em Risco (%)"] > 40:
             return ["background-color: #ffcccc; color: #900000; font-weight: bold;"] * len(row)
         return [""] * len(row)
         
-    styled = df.style.apply(_color_curriculum, axis=1).format({"Média Geral": "{:.1f}", "Alunos em Risco (%)": "{:.1f}%"})
+    styled = df.drop(columns=["Cor"]).style.apply(_color_curriculum, axis=1).format({
+        "Média Geral": "{:.1f}", 
+        "Alunos em Risco (%)": "{:.1f}%"
+    })
     st.dataframe(styled, use_container_width=True)
-    
-    st.caption("🚨 Linhas em vermelho (Risco > 40%) indicam a necessidade de **reforço de carga horária** ou **mais tarefas** para fixação do tópico.")

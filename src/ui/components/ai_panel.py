@@ -113,7 +113,6 @@ def _render_recommendation(
     if already_shown:
         st.success("✅ Esta recomendação já foi gerada para este grupo.")
 
-    st.info(f"⚠️ **{rec.disclaimer}**")
 
     st.markdown("**Recomendações geradas pela IA:**")
     for i, r in enumerate(rec.recommendations, 1):

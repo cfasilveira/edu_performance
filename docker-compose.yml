@@ -1,0 +1,77 @@
+name: edu-analytics-mvp
+
+networks:
+  edu-net:
+    driver: bridge
+    name: edu-net
+
+volumes:
+  edu-db-data:
+    driver: local
+    name: edu-db-data
+
+services:
+
+  # ── PostgreSQL (banco leve para MVP) ──────────────────────────────────────
+  edu-db:
+    image: postgres:16-alpine
+    container_name: edu-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-edu_mvp}
+      POSTGRES_USER: ${POSTGRES_USER:-edu_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - edu-db-data:/var/lib/postgresql/data
+      - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"   # 5433 no host para evitar conflito com postgres local
+    networks:
+      - edu-net
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edu_user} -d ${POSTGRES_DB:-edu_mvp}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Streamlit App (MVP EduAnalytics) ──────────────────────────────────────
+  edu-mvp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edu-mvp
+    restart: unless-stopped
+    depends_on:
+      edu-db:
+        condition: service_healthy
+    environment:
+      EDU_DB_URL: postgresql://${POSTGRES_USER:-edu_user}:${POSTGRES_PASSWORD}@edu-db:5432/${POSTGRES_DB:-edu_mvp}
+      EDU_OLLAMA_HOST: http://host.docker.internal:11434
+      EDU_DEFAULT_MODEL: ${EDU_DEFAULT_MODEL:-mistral}
+      EDU_LOG_LEVEL: ${EDU_LOG_LEVEL:-INFO}
+    volumes:
+      - ./data:/app/data:ro         # CSVs de entrada (read-only)
+      - ./logs:/app/logs            # logs estruturados JSON
+    ports:
+      - "8501:8501"                 # Streamlit
+    networks:
+      - edu-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # acesso ao Ollama no host
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

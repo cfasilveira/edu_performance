@@ -1,0 +1,118 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Contrato de regras pedagógicas do EduAnalytics MVP. NÃO altere sem validação do Agente 6.",
+    "last_updated": "2026-05-13",
+    "owner": "agent6_integration"
+  },
+
+  "grading": {
+    "passing_threshold": 60.0,
+    "max_grade": 100.0,
+    "min_grade": 0.0,
+    "at_risk_threshold": 50.0,
+    "excellence_threshold": 85.0,
+    "grade_scale": "0-100",
+    "rounding_rule": "half_up",
+    "decimal_places": 1
+  },
+
+  "grouping": {
+    "min_group_size": 3,
+    "max_group_size": 15,
+    "cross_class_allowed": true,
+    "grouping_criteria": ["subject_weakness", "shared_difficulty_pattern", "grade_range"],
+    "similarity_algorithm": "cosine",
+    "similarity_threshold": 0.75
+  },
+
+  "ai_recommendations": {
+    "max_recommendations_per_student": 5,
+    "disclaimer_required": true,
+    "disclaimer_text": "IA auxilia, humano decide. Valide com seu julgamento pedagógico antes de agir.",
+    "prohibited_topics": ["medical_diagnosis", "psychological_diagnosis", "punitive_actions"],
+    "tone": "formative",
+    "language": "pt-BR",
+    "require_human_approval": true
+  },
+
+  "subjects": {
+    "core": ["Matemática", "Português", "Ciências", "História", "Geografia"],
+    "optional": ["Artes", "Educação Física", "Língua Inglesa", "Informática"],
+    "weight_core": 1.0,
+    "weight_optional": 0.5
+  },
+
+  "attendance": {
+    "min_attendance_percent": 75.0,
+    "at_risk_attendance_percent": 60.0
+  },
+
+  "lgpd": {
+    "data_retention_days": 365,
+    "anonymization_required": true,
+    "hash_algorithm": "sha256",
+    "hash_length_chars": 12,
+    "consent_required": true,
+    "deletion_on_request": true,
+    "tenant_scope": "single_school_mvp",
+    "tenant_migration_notes": "Para adicionar escolas futuras: gere um tenant_id único por escola e filtre todos os queries por tenant_id. AuditLogEntry já suporta o campo."
+  },
+
+  "performance": {
+    "max_csv_size_mb": 100,
+    "parse_timeout_seconds": 30,
+    "llm_timeout_seconds": 60,
+    "llm_max_retries": 2,
+    "llm_rate_limit_rpm": 3,
+    "cache_ttl_seconds": 3600
+  },
+
+  "models": {
+    "_comment": "Adicione modelos testados e aprovados aqui. Use o SupportedModel enum em contracts/data_models.py.",
+    "default": "mistral",
+    "available": [
+      {
+        "id": "mistral",
+        "label": "Mistral 7B",
+        "status": "active",
+        "ram_gb": 7.1,
+        "inference": "cpu",
+        "notes": "Padrão MVP. Testado no Ryzen 5 5600X."
+      },
+      {
+        "id": "llama3",
+        "label": "Llama 3 8B",
+        "status": "planned",
+        "ram_gb": 8.0,
+        "inference": "cpu",
+        "notes": "Validar consumo de RAM antes de habilitar (Ollama+app+DB ≤ 24GB)."
+      },
+      {
+        "id": "qwen2",
+        "label": "Qwen 2 7B",
+        "status": "planned",
+        "ram_gb": 7.0,
+        "inference": "cpu",
+        "notes": "Alternativa multilingual ao Mistral."
+      },
+      {
+        "id": "gemma2",
+        "label": "Gemma 2 9B",
+        "status": "planned",
+        "ram_gb": 9.0,
+        "inference": "cpu",
+        "notes": "Requer validação de RAM (9GB + overhead = risco no MVP)."
+      }
+    ]
+  },
+
+  "deploy": {
+    "environment": "local",
+    "os": "Ubuntu 24.04.4 LTS",
+    "docker_version": "28.2.2",
+    "tls_required": false,
+    "ci_external": false,
+    "notes": "MVP roda localmente. TLS e CI externo são opcionais e preparados para produção futura."
+  }
+}

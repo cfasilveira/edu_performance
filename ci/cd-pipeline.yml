@@ -1,0 +1,125 @@
+name: EduAnalytics MVP — CI Pipeline
+
+on:
+  push:
+    branches: [main, dev, "feat/*"]
+  pull_request:
+    branches: [main, dev]
+
+env:
+  PYTHON_VERSION: "3.12"
+  UV_VERSION: "0.4.0"
+
+jobs:
+  # ─────────────────────────────────────────────
+  # 1. Linting & Type Checking
+  # ─────────────────────────────────────────────
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: pip install uv==${{ env.UV_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run ruff
+        run: uv run ruff check src/ tests/
+
+      - name: Run mypy
+        run: uv run mypy --strict src/
+
+  # ─────────────────────────────────────────────
+  # 2. Contract Validation
+  # ─────────────────────────────────────────────
+  contracts:
+    name: Validate Contracts & Security
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: pip install uv==${{ env.UV_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Validate contracts
+        run: python scripts/validate_contracts.py
+
+  # ─────────────────────────────────────────────
+  # 3. Unit & Security Tests
+  # ─────────────────────────────────────────────
+  test:
+    name: Tests (unit + security)
+    runs-on: ubuntu-latest
+    needs: contracts
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: pip install uv==${{ env.UV_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run tests (parallel)
+        run: |
+          uv run pytest tests/ \
+            -n auto \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --junitxml=reports/junit.xml \
+            -v
+        env:
+          EDU_OLLAMA_HOST: "http://localhost:11434"  # mock no CI
+
+      - name: Check coverage threshold
+        run: uv run pytest --cov=src --cov-fail-under=85
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: reports/
+
+  # ─────────────────────────────────────────────
+  # 4. Docker Build Validation
+  # ─────────────────────────────────────────────
+  docker:
+    name: Docker Compose Validate
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate docker-compose.yml
+        run: docker compose config --quiet
+
+      - name: Check .env not committed
+        run: |
+          if git log --all --name-only --format="" | grep -q "^\.env$"; then
+            echo "❌ .env foi commitado! Remova do histórico antes de prosseguir."
+            exit 1
+          fi
+          echo "✅ .env não está no histórico git."

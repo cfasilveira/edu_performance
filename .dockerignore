@@ -1,0 +1,42 @@
+# ── Compilados Python ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# ── Ambiente virtual ───────────────────────────────────────────────────────
+.venv/
+venv/
+.uv/
+
+# ── Dados e uploads (não entram na imagem, são bind-mounted) ──────────────
+data/
+logs/
+uploads/
+
+# ── Variáveis de ambiente (NUNCA commitar) ─────────────────────────────────
+.env
+*.env
+
+# ── Testes e relatórios (não precisam estar na imagem de produção) ────────
+tests/
+reports/
+htmlcov/
+.coverage
+coverage.xml
+junit*.xml
+
+# ── Desenvolvimento ────────────────────────────────────────────────────────
+.agent_prompts/
+.vscode/
+.idea/
+*.md
+docs/
+ci/
+scripts/
+
+# ── Git ────────────────────────────────────────────────────────────────────
+.git/
+.gitignore

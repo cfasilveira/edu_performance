@@ -81,10 +81,10 @@
 
   "models": {
     "_comment": "Adicione modelos testados e aprovados aqui. Use o SupportedModel enum em contracts/data_models.py.",
-    "default": "mistral",
+    "default": "mistral-nemo-otimizado:latest",
     "available": [
       {
-        "id": "mistral",
+        "id": "mistral-nemo-otimizado:latest",
         "label": "Mistral 7B",
         "status": "active",
         "ram_gb": 7.1,

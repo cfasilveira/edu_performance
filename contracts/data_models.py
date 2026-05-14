@@ -67,7 +67,7 @@ class SupportedModel(str, Enum):
     Adicione novos modelos aqui conforme forem testados e aprovados.
     O campo `default` em pedagogical_rules.json["models"] define qual usar.
     """
-    MISTRAL = "mistral"              # padrão MVP — 7.1 GB, CPU-only
+    MISTRAL = "mistral-nemo-otimizado:latest" # padrão do usuário — 7.1 GB, CPU-only
     LLAMA3 = "llama3"                # futuro — 8B, requer validação de RAM
     QWEN2 = "qwen2"                  # futuro — 7B, multilingual
     GEMMA2 = "gemma2"                # futuro — 9B, Google

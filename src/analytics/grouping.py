@@ -22,6 +22,7 @@ from typing import Final
 import structlog
 
 from contracts.data_models import GradeRecord, GroupingResult, SubjectEnum
+from src.models.grade import PASSING_THRESHOLD
 
 __all__ = ["group_students_by_weakness", "GroupingError"]
 
@@ -33,7 +34,6 @@ log = structlog.get_logger(__name__)
 MIN_GROUP_SIZE: Final[int] = 3
 MAX_GROUP_SIZE: Final[int] = 15
 SIMILARITY_THRESHOLD: Final[float] = 0.75
-PASSING_THRESHOLD: Final[float] = 60.0
 
 # Ordem canônica dos sujeitos para construção dos vetores
 _SUBJECT_ORDER: Final[list[str]] = [s.value for s in SubjectEnum]
@@ -66,8 +66,8 @@ def _build_grade_vector(grades: list[GradeRecord]) -> list[float]:
     for g in grades:
         # Mantém a nota mais baixa se houver duplicatas (pior caso)
         key = g.subject.value
-        grade_map[key] = min(grade_map.get(key, 100.0), g.grade)
-    return [grade_map.get(subj, 100.0) for subj in _SUBJECT_ORDER]
+        grade_map[key] = min(grade_map.get(key, 10.0), g.grade)
+    return [grade_map.get(subj, 10.0) for subj in _SUBJECT_ORDER]
 
 
 def _cosine_similarity(a: list[float], b: list[float]) -> float:

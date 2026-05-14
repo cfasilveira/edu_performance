@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from contracts.data_models import GradeRecord
-from src.models.grade import PASSING_THRESHOLD, compute_class_statistics
+from src.models.grade import PASSING_THRESHOLD, AT_RISK_THRESHOLD, EXCELLENCE_THRESHOLD, compute_class_statistics
 
 __all__ = ["render_grade_table"]
 
@@ -59,7 +59,7 @@ def render_grade_table(records: list[GradeRecord]) -> None:
     def _color_row(row):
         if row["Nota"] < PASSING_THRESHOLD:
             return ["background-color: #fff0f0"] * len(row)
-        if row["Nota"] >= 85:
+        if row["Nota"] >= EXCELLENCE_THRESHOLD:
             return ["background-color: #f0fff0"] * len(row)
         return [""] * len(row)
 
@@ -69,15 +69,15 @@ def render_grade_table(records: list[GradeRecord]) -> None:
     st.caption(
         f"📌 {len(records)} notas carregadas · "
         f"IDs exibidos com 6 caracteres (anonimizados) · "
-        f"Vermelho = abaixo de {PASSING_THRESHOLD:.0f} · Verde = excelência (≥ 85)"
+        f"Vermelho = abaixo de {PASSING_THRESHOLD:.1f} · Verde = excelência (≥ {EXCELLENCE_THRESHOLD:.1f})"
     )
 
 
 def _status_label(grade: float) -> str:
-    if grade >= 85:
+    if grade >= EXCELLENCE_THRESHOLD:
         return "✅ Excelente"
-    if grade >= 60:
+    if grade >= PASSING_THRESHOLD:
         return "🟡 Aprovado"
-    if grade >= 50:
+    if grade >= AT_RISK_THRESHOLD:
         return "🟠 Em risco"
     return "🔴 Reprovado"

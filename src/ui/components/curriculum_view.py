@@ -23,7 +23,7 @@ def render_curriculum_view(records: list[GradeRecord]) -> None:
     
     def _color_curriculum(row):
         if row["Alunos em Risco (%)"] > 40:
-            return ["background-color: #fff0f0"] * len(row)
+            return ["background-color: #ffcccc; color: #900000; font-weight: bold;"] * len(row)
         return [""] * len(row)
         
     styled = df.style.apply(_color_curriculum, axis=1).format({"Média Geral": "{:.1f}", "Alunos em Risco (%)": "{:.1f}%"})

@@ -90,20 +90,15 @@ def render_ai_panel(
                 advisor = PedagogicalAdvisor()
                 recommendation = _run_async(advisor.recommend(selected_group))
                 advisor.close()
-                st.session_state[f"rec_{selected_group.group_id}"] = recommendation
+                st.session_state.ai_recommendations.append(recommendation)
             except Exception as exc:
                 st.error(f"❌ Erro ao gerar recomendação: {exc}")
-                return approved_now
             finally:
                 st.session_state.ai_loading = False
 
         st.rerun()
 
-    rec_key = f"rec_{selected_group.group_id}"
-    if rec_key in st.session_state:
-        _render_recommendation(st.session_state[rec_key], on_approve, approved_now)
-
-    return approved_now
+    return []
 
 
 def _render_recommendation(
